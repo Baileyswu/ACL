@@ -24,11 +24,11 @@ int Nfa::newnode(int parent, char c, bool cycle) {
 int NFA::Nfa::push_to_queue(std::deque<int>& Q, std::vector<int>& vis, int toq)
 {
 	if (vis[toq])
-		return 0;
+		return 1;
 	Q.push_back(toq);
 	cout << " " << toq;
 	vis[toq] = true;
-	return 1;
+	return 0;
 }
 
 bool NFA::Nfa::can_trans(int id, char c)
@@ -55,7 +55,10 @@ int Nfa::insert(const char buf[]){
 	Node *nd = &nodes[now];
 	MAP mp;
 	
-	if (len == 0) return 0;
+	if (len == 0) {
+		printf("No rules to insert");
+		return 1;
+	}
 
 	nodes[now].count++;
 	for (int i = 0; i < len; i++) {
@@ -67,7 +70,7 @@ int Nfa::insert(const char buf[]){
 		nd = goto_next(now, mp[buf[i]], true);
 	}
 	(*nd).is_end = true;
-	return 1;
+	return 0;
 }
 
 int Nfa::del(const char buf[]){
@@ -115,7 +118,7 @@ int Nfa::query(const char buf[]){
 	for (int i = 0; i < len; i++) {
 		cout << endl << buf[i] << ": ";
 		int size = Q.size();
-		if (size == 0) return 0;
+		if (size == 0) return 1;
 		vis.assign(nodes.size(), false);
 		while (size--) {
 			int fd = Q.front(); 
@@ -138,9 +141,9 @@ int Nfa::query(const char buf[]){
 		int fd = Q.front();
 		Q.pop_front();
 		if (nodes[fd].is_end)
-			return 1;
+			return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int NFA::Nfa::show()
