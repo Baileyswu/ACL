@@ -4,3 +4,4 @@ project (ACL)
 
 add_subdirectory (source)
 add_subdirectory (test)
+add_subdirectory (cs)

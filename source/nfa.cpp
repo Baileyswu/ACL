@@ -1,6 +1,6 @@
 #include "nfa.h"
+#include "Protocal.h"
 #include <iostream>
-#include <queue>
 using namespace std;
 using namespace NFA;
 
@@ -15,23 +15,23 @@ Nfa::~Nfa(){
 
 int Nfa::newnode(int parent, char c, bool cycle) {
 	Node nd(cycle);
-	int id = nodes.size();
+	int id = (int)nodes.size();
 	nodes.push_back(nd);
 	nodes[parent].mp[c] = id;
 	return id;
 }
 
-int NFA::Nfa::push_to_queue(std::deque<int>& Q, std::vector<int>& vis, int toq)
+int Nfa::push_to_queue(std::deque<int>& Q, std::vector<int>& vis, int toq)
 {
 	if (vis[toq])
-		return 1;
+		return NFA_ERR;
 	Q.push_back(toq);
 	cout << " " << toq;
 	vis[toq] = true;
-	return 0;
+	return NFA_SUCCESS;
 }
 
-bool NFA::Nfa::can_trans(int id, char c)
+bool Nfa::can_trans(int id, char c)
 {
 	MAP mp = nodes[id].mp;
 	if (mp.find(c) == mp.end())
@@ -40,7 +40,7 @@ bool NFA::Nfa::can_trans(int id, char c)
 	return nodes[nt].count > 0;
 }
 
-Node* NFA::Nfa::goto_next(int& now, int nt, bool addcount)
+Node* Nfa::goto_next(int& now, int nt, bool addcount)
 {
 	now = nt;
 	Node* nd = &nodes[now];
@@ -49,15 +49,15 @@ Node* NFA::Nfa::goto_next(int& now, int nt, bool addcount)
 	return nd;
 }
 
-int Nfa::insert(const char buf[]){
-	int len = strlen(buf);
+int Nfa::Insert_Rule(const char buf[]){
+	size_t len = strlen(buf);
 	int now = 0;
 	Node *nd = &nodes[now];
 	MAP mp;
 	
 	if (len == 0) {
 		printf("No rules to insert");
-		return 1;
+		return NFA_ERR;
 	}
 
 	nodes[now].count++;
@@ -70,25 +70,25 @@ int Nfa::insert(const char buf[]){
 		nd = goto_next(now, mp[buf[i]], true);
 	}
 	(*nd).is_end = true;
-	return 0;
+	return NFA_SUCCESS;
 }
 
-int Nfa::del(const char buf[]){
-	int len = strlen(buf);
+int Nfa::Delete_Rule(const char buf[]){
+	size_t len = strlen(buf);
 	std::vector<int> path;
 	int now = 0;
 	Node* nd = &nodes[now];
 	MAP mp;
 
 	if (len == 0)
-		return 1;
+		return NFA_ERR;
 
 	int maxflow = nodes[now].count;
 	path.push_back(now);
 	for (int i = 0; i < len; i++) {
 		mp = (*nd).mp;
 		if (mp.find(buf[i]) == mp.end())
-			return 1;
+			return NFA_ERR;
 		nd = goto_next(now, mp[buf[i]], false);
 		maxflow = min(maxflow, (*nd).count);
 		path.push_back(mp[buf[i]]);
@@ -101,15 +101,15 @@ int Nfa::del(const char buf[]){
 			nodes[id].is_end = nodes[id].is_cycle = false;
 		}
 	}
-	show();
+	Show();
 
-	return 0;
+	return NFA_SUCCESS;
 }
 
-int Nfa::query(const char buf[]){
-	show();
+int Nfa::Query(const char buf[]){
+	Show();
 	cout << "------->" << buf << endl;
-	int len = strlen(buf);
+	size_t len = strlen(buf);
 	int now = 0;
 	std::deque<int> Q;
 	std::vector<int> vis(sizeof(nodes));
@@ -117,8 +117,8 @@ int Nfa::query(const char buf[]){
 	push_to_queue(Q, vis, now);
 	for (int i = 0; i < len; i++) {
 		cout << endl << buf[i] << ": ";
-		int size = Q.size();
-		if (size == 0) return 1;
+		size_t size = Q.size();
+		if (size == 0) return NFA_ERR;
 		vis.assign(nodes.size(), false);
 		while (size--) {
 			int fd = Q.front(); 
@@ -141,12 +141,12 @@ int Nfa::query(const char buf[]){
 		int fd = Q.front();
 		Q.pop_front();
 		if (nodes[fd].is_end)
-			return 0;
+			return NFA_SUCCESS;
 	}
-	return 1;
+	return NFA_ERR;
 }
 
-int NFA::Nfa::show()
+int Nfa::Show()
 {
 	cout << "\n==================\n";
 	for (int i = 0; i < nodes.size(); i++) {
@@ -157,6 +157,41 @@ int NFA::Nfa::show()
 		for (MAP::iterator it = nd.mp.begin(); it != nd.mp.end(); it++)
 			cout << " <" << it->first << ", " << it->second << ">" << endl;
 	}
-	return 0;
+	return NFA_SUCCESS;
+}
+
+int Nfa::Opeartion(char c, char* str) {
+	switch (c) {
+	case 'q':
+		return Query(str);
+	case 'a':
+		return Insert_Rule(str);
+	case 'd':
+		return Delete_Rule(str);
+	}
+	return NFA_ERR;
+}
+
+int Nfa::Parse_Data(char* recv, char* send, int& len) {
+	N_MESSAGE* msg = (N_MESSAGE*)recv;
+	N_HEADER* head_ptr = &(msg->header);
+	char* str = recv + sizeof(N_HEADER);
+	
+	if (head_ptr->protocol != PROTOCOL_TYPE)
+		return NFA_ERR;
+
+	if (head_ptr->pkgFlag == HEART_BEAT)
+		return NFA_ERR;
+
+	int ans = Opeartion(head_ptr->command, str);
+	char body[8];
+	body[0] = ans == 0 ? 'y' : 'n';
+	body[1] = '\0';
+
+	N_MESSAGE* ret = Make_Message(PROTOCOL_TYPE, HEART_BEAT + 1, head_ptr->command, body);
+
+	len = ret->getsize();
+	memcpy(send, ret, len);
+	return NFA_SUCCESS;
 }
 

@@ -1,13 +1,21 @@
+#ifndef _LIB_NFA__
+#define _LIB_NFA__
+
+
 #include <map>
 #include <vector>
 #include <queue>
-
-using namespace std;
 
 namespace NFA
 {
 	const char FREE = '*';
 	typedef std::map<char, int> MAP;
+
+	enum RETCODE
+	{
+		NFA_SUCCESS = 0,
+		NFA_ERR = 1,
+	};
 
 	struct Node
 	{
@@ -29,10 +37,14 @@ namespace NFA
 	public:
 		Nfa();
 		~Nfa();
-		int insert(const char buf[]);
-		int del(const char buf[]);
-		int query(const char buf[]);
-		int show();
+		int Insert_Rule(const char buf[]);
+		int Delete_Rule(const char buf[]);
+		int Query(const char buf[]);
+		int Show();
+		int Opeartion(char c, char* str);
+		int Parse_Data(char* recv, char* send, int& len);
 	};
 
 }
+
+#endif // !_LIB_NFA__
