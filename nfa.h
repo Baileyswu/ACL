@@ -25,7 +25,7 @@ namespace NFA
 		int newnode(int parent, char c, bool cycle);
 		int push_to_queue(std::deque<int>& Q, std::vector<int> &vis, int toq);
 		bool can_trans(int id, char c);
-		Node* goto_next(int& now, int nt);
+		Node* goto_next(int& now, int nt, bool addcount);
 	public:
 		Nfa();
 		~Nfa();

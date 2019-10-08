@@ -40,11 +40,12 @@ bool NFA::Nfa::can_trans(int id, char c)
 	return nodes[nt].count > 0;
 }
 
-Node* NFA::Nfa::goto_next(int& now, int nt)
+Node* NFA::Nfa::goto_next(int& now, int nt, bool addcount)
 {
 	now = nt;
 	Node* nd = &nodes[now];
-	(*nd).count++;
+	if(addcount)
+		(*nd).count++;
 	return nd;
 }
 
@@ -60,32 +61,51 @@ int Nfa::insert(const char buf[]){
 	for (int i = 0; i < len; i++) {
 		mp = (*nd).mp;
 		if (mp.find(buf[i]) == mp.end()) {
-			if (buf[i] == FREE) {
-				mp[buf[i]] = newnode(now, buf[i], true);
-				nd = goto_next(now, mp[buf[i]]);
-				mp = (*nd).mp;
-			}
-			mp[buf[i]] = newnode(now, buf[i], false);
+			bool is_cycle = buf[i] == FREE ? true : false;
+			mp[buf[i]] = newnode(now, buf[i], is_cycle);
 		}
-		else {
-			if (buf[i] == FREE) {
-				nd = goto_next(now, mp[buf[i]]);
-				mp = (*nd).mp;
-			}
-		}
-		nd = goto_next(now, mp[buf[i]]);
+		nd = goto_next(now, mp[buf[i]], true);
 	}
 	(*nd).is_end = true;
 	return 1;
 }
 
 int Nfa::del(const char buf[]){
+	int len = strlen(buf);
+	std::vector<int> path;
+	int now = 0;
+	Node* nd = &nodes[now];
+	MAP mp;
+
+	if (len == 0)
+		return 1;
+
+	int maxflow = nodes[now].count;
+	path.push_back(now);
+	for (int i = 0; i < len; i++) {
+		mp = (*nd).mp;
+		if (mp.find(buf[i]) == mp.end())
+			return 1;
+		nd = goto_next(now, mp[buf[i]], false);
+		maxflow = min(maxflow, (*nd).count);
+		path.push_back(mp[buf[i]]);
+;	}
+
+	for (int i = 0; i < path.size(); i++) {
+		int id = path[i];
+		nodes[id].count -= maxflow;
+		if (nodes[id].count == 0) {
+			nodes[id].is_end = nodes[id].is_cycle = false;
+		}
+	}
+	show();
+
 	return 0;
 }
 
 int Nfa::query(const char buf[]){
 	show();
-	cout << buf << endl;
+	cout << "------->" << buf << endl;
 	int len = strlen(buf);
 	int now = 0;
 	std::deque<int> Q;
@@ -103,13 +123,11 @@ int Nfa::query(const char buf[]){
 
 			Q.pop_front(); 
 
-			if (can_trans(fd, FREE) && nodes[mp[FREE]].is_cycle) {
+			if (can_trans(fd, FREE)) {
 				push_to_queue(Q, vis, mp[FREE]);
-				push_to_queue(Q, vis, nodes[mp[FREE]].mp[FREE]);
 			}
 			if (nodes[fd].is_cycle) {
 				push_to_queue(Q, vis, fd);
-				push_to_queue(Q, vis, mp[FREE]);
 			}
 			if(can_trans(fd, buf[i])) {
 				push_to_queue(Q, vis, mp[buf[i]]);
