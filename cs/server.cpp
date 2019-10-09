@@ -31,7 +31,7 @@ void* Handle_Thread(void* ptr)
 	while (flag == SUCCESS)
 	{
 		flag = skt.Receive(client_sockid, recv_buf, buf_len);
-		cout << "flag: " << flag << endl;
+//		cout << "flag: " << flag << endl;
 		if (flag == WSAETIMEDOUT && wait_time + RECV_CIRCLE_TIME < TIME_OUT_LIMIT)
 		{
 			wait_time += RECV_CIRCLE_TIME;

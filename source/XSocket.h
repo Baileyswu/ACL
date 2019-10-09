@@ -46,6 +46,8 @@ namespace XSOCKET
 		int Accept(int& clntSock, SOCKADDR& clntAddr);
 		int Receive(int& clntSock, char* buffer, int& slen);
 		int Send(int& clntSock, char* cstr, int& len);
+		int Send(char* cstr, int& len);
+		int Receive(char* buffer, int& slen);
 		int Make_Heart_Beat(char* cstr, int& len);
 	};
 

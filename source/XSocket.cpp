@@ -6,11 +6,13 @@
 
 using namespace XSOCKET;
 
-XSocket::XSocket() {
+XSocket::XSocket()
+{
 	*this = XSocket("127.0.0.1", 25525);
 }
 
-XSocket::XSocket(const char* ip, const int port) {
+XSocket::XSocket(const char* ip, const int port)
+{
 	memset(&_sockAddr, 0, sizeof(_sockAddr));
 	_sockAddr.sin_family = AF_INET;
 	_sockAddr.sin_addr.s_addr = inet_addr(ip);
@@ -18,7 +20,8 @@ XSocket::XSocket(const char* ip, const int port) {
 	_nSize = sizeof(SOCKADDR);
 }
 
-int XSocket::Start_Server() {
+int XSocket::Start_Server()
+{
 	int err_code;
 	int iResult;
 	int intServSock;
@@ -68,7 +71,8 @@ int XSocket::Start_Server() {
 	return SUCCESS;
 }
 
-int XSocket::Close_Server() {
+int XSocket::Close_Server()
+{
 	Print_Func(__func__, __LINE__);
 #ifdef _WIN32
 	closesocket(_servSock);
@@ -79,7 +83,8 @@ int XSocket::Close_Server() {
 	return SUCCESS;
 }
 
-int XSocket::Close_Client(int& clntSock) {
+int XSocket::Close_Client(int& clntSock)
+{
 	Print_Func(__func__, __LINE__);
 #ifdef _WIN32
 	closesocket(clntSock);
@@ -90,7 +95,8 @@ int XSocket::Close_Client(int& clntSock) {
 	return SUCCESS;
 }
 
-int XSocket::Start_Client() {
+int XSocket::Start_Client()
+{
 	int err_code;
 	int iResult;
 	int intServSock;
@@ -118,7 +124,8 @@ int XSocket::Start_Client() {
 	return SUCCESS;
 }
 
-int XSocket::Close_Client() {
+int XSocket::Close_Client()
+{
 	Print_Func(__func__, __LINE__);
 #ifdef _WIN32
 	closesocket(_clientSock);
@@ -129,7 +136,8 @@ int XSocket::Close_Client() {
 	return SUCCESS;
 }
 
-int XSocket::Accept(int& clntSock, SOCKADDR& clntAddr) {
+int XSocket::Accept(int& clntSock, SOCKADDR& clntAddr)
+{
 	Print_Func(__func__, __LINE__);
 	int iResult;
 	int err_code;
@@ -162,7 +170,8 @@ int XSocket::Accept(int& clntSock, SOCKADDR& clntAddr) {
 	return SUCCESS;
 }
 
-int XSocket::Receive(int& clntSock, char* buffer, int& slen) {
+int XSocket::Receive(int& clntSock, char* buffer, int& slen) 
+{
 	Print_Func(__func__, __LINE__);
 	int err_code;
 	int pkg_len;
@@ -201,12 +210,13 @@ int XSocket::Receive(int& clntSock, char* buffer, int& slen) {
 	return SUCCESS;
 }
 
-int XSocket::Send(int& clntSock, char* cstr, int& len) {
+int XSocket::Send(int& clntSock, char* cstr, int& len) 
+{
 	Print_Func(__func__, __LINE__);
 	int iResult;
 	int err_code;
 	cstr[len] = '\0';
-	Print_Buffer(cstr, len);
+	// Print_Buffer(cstr, len);
 	iResult = send(clntSock, cstr, len, 0);
 	if (iResult == SOCKET_ERROR) {
 		err_code = Get_Error_Code(clntSock);
@@ -216,7 +226,23 @@ int XSocket::Send(int& clntSock, char* cstr, int& len) {
 	return SUCCESS;
 }
 
-int XSocket::Make_Heart_Beat(char* cstr, int& len) {
+int XSocket::Send(char* cstr, int& len) 
+{
+	Print_Func(__func__, __LINE__);
+	int clntSock = _clientSock;
+	return Send(clntSock, cstr, len);
+}
+
+int XSocket::Receive(char* buffer, int& slen) 
+{
+	Print_Func(__func__, __LINE__);
+	int clntSock = _clientSock;
+	return Receive(clntSock, buffer, slen);
+}
+
+
+int XSocket::Make_Heart_Beat(char* cstr, int& len)
+{
 	char ret[10] = "n1h00000\0";
 	len = 8;
 	memcpy(cstr, ret, len);

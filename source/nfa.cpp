@@ -4,16 +4,19 @@
 using namespace std;
 using namespace NFA;
 
-Nfa::Nfa(){
+Nfa::Nfa()
+{
 	Node nd;
 	nodes.push_back(nd);
 }
 
-Nfa::~Nfa(){
+Nfa::~Nfa()
+{
 	nodes.clear();
 }
 
-int Nfa::newnode(int parent, char c, bool cycle) {
+int Nfa::newnode(int parent, char c, bool cycle) 
+{
 	Node nd(cycle);
 	int id = (int)nodes.size();
 	nodes.push_back(nd);
@@ -21,7 +24,7 @@ int Nfa::newnode(int parent, char c, bool cycle) {
 	return id;
 }
 
-int Nfa::push_to_queue(std::deque<int>& Q, std::vector<int>& vis, int toq)
+int Nfa::push_to_queue(std::deque<int>& Q, std::vector<int>& vis, int toq) 
 {
 	if (vis[toq])
 		return NFA_ERR;
@@ -49,7 +52,9 @@ Node* Nfa::goto_next(int& now, int nt, bool addcount)
 	return nd;
 }
 
-int Nfa::Insert_Rule(const char buf[]){
+int Nfa::Insert_Rule(const char buf[])
+{
+	printf("%s line:%d\n", __func__, __LINE__);
 	size_t len = strlen(buf);
 	int now = 0;
 	Node *nd = &nodes[now];
@@ -73,7 +78,9 @@ int Nfa::Insert_Rule(const char buf[]){
 	return NFA_SUCCESS;
 }
 
-int Nfa::Delete_Rule(const char buf[]){
+int Nfa::Delete_Rule(const char buf[])
+{
+	printf("%s line:%d\n", __func__, __LINE__);
 	size_t len = strlen(buf);
 	std::vector<int> path;
 	int now = 0;
@@ -92,7 +99,7 @@ int Nfa::Delete_Rule(const char buf[]){
 		nd = goto_next(now, mp[buf[i]], false);
 		maxflow = min(maxflow, (*nd).count);
 		path.push_back(mp[buf[i]]);
-;	}
+	}
 
 	for (int i = 0; i < path.size(); i++) {
 		int id = path[i];
@@ -102,13 +109,14 @@ int Nfa::Delete_Rule(const char buf[]){
 		}
 	}
 	Show();
-
 	return NFA_SUCCESS;
 }
 
-int Nfa::Query(const char buf[]){
-	Show();
+int Nfa::Query(const char buf[])
+{
+	printf("%s line:%d\n", __func__, __LINE__);
 	cout << "------->" << buf << endl;
+	Show();
 	size_t len = strlen(buf);
 	int now = 0;
 	std::deque<int> Q;
@@ -118,7 +126,6 @@ int Nfa::Query(const char buf[]){
 	for (int i = 0; i < len; i++) {
 		cout << endl << buf[i] << ": ";
 		size_t size = Q.size();
-		if (size == 0) return NFA_ERR;
 		vis.assign(nodes.size(), false);
 		while (size--) {
 			int fd = Q.front(); 
@@ -136,7 +143,12 @@ int Nfa::Query(const char buf[]){
 				push_to_queue(Q, vis, mp[buf[i]]);
 			}
 		}
+		if (Q.size() == 0) {
+			cout << endl;
+			return NFA_ERR;
+		}
 	}
+	cout << endl;
 	while (!Q.empty()) {
 		int fd = Q.front();
 		Q.pop_front();
@@ -146,7 +158,7 @@ int Nfa::Query(const char buf[]){
 	return NFA_ERR;
 }
 
-int Nfa::Show()
+int Nfa::Show() 
 {
 	cout << "\n==================\n";
 	for (int i = 0; i < nodes.size(); i++) {
@@ -157,10 +169,12 @@ int Nfa::Show()
 		for (MAP::iterator it = nd.mp.begin(); it != nd.mp.end(); it++)
 			cout << " <" << it->first << ", " << it->second << ">" << endl;
 	}
+
 	return NFA_SUCCESS;
 }
 
-int Nfa::Opeartion(char c, char* str) {
+int Nfa::Opeartion(char c, char* str) 
+{
 	switch (c) {
 	case 'q':
 		return Query(str);
@@ -172,7 +186,8 @@ int Nfa::Opeartion(char c, char* str) {
 	return NFA_ERR;
 }
 
-int Nfa::Parse_Data(char* recv, char* send, int& len) {
+int Nfa::Parse_Data(char* recv, char* send, int& len) 
+{
 	N_MESSAGE* msg = (N_MESSAGE*)recv;
 	N_HEADER* head_ptr = &(msg->header);
 	char* str = recv + sizeof(N_HEADER);

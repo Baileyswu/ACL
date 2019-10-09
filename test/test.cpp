@@ -11,11 +11,10 @@ void Print_Msg(char* a, int len) {
 	putchar('\n');
 }
 
-int case1(){
+int case1() {
 	Nfa g;
 	assert(g.Insert_Rule("a*b") == NFA_SUCCESS);
 	assert(g.Insert_Rule("abcd") == NFA_SUCCESS);
-	assert(g.Insert_Rule("a*c") == NFA_SUCCESS);
 	assert(g.Insert_Rule("") == NFA_ERR);
 
 	assert(g.Query("abbcd") == NFA_ERR);
@@ -28,7 +27,10 @@ int case1(){
 	assert(g.Query("ab") == NFA_ERR);
 	assert(g.Query("abbcb") == NFA_ERR);
 	assert(g.Query("abcd") == NFA_SUCCESS);
+	return 0;
+}
 
+int case2(){
 	Nfa n;
 	assert(n.Insert_Rule("www.*.com") == NFA_SUCCESS);
 	assert(n.Query("www.baidu.com") == NFA_SUCCESS);
@@ -38,7 +40,7 @@ int case1(){
 	return 0;
 }
 
-int case2() {
+int case3() {
 	Nfa g;
 	char str[100] = "n1na3000a*b";
 	char back[100];
@@ -81,5 +83,5 @@ int case2() {
 }
 
 int main() {
-	case2();
+	case1();
 }
