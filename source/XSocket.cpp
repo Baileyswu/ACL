@@ -237,7 +237,9 @@ int XSocket::Receive(char* buffer, int& slen)
 {
 	Print_Func(__func__, __LINE__);
 	int clntSock = _clientSock;
-	return Receive(clntSock, buffer, slen);
+	int retcode;
+	while ((retcode = Receive(clntSock, buffer, slen)) == HEARTBEAT);
+	return retcode;
 }
 
 

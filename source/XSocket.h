@@ -5,7 +5,7 @@
 #include <WinSock2.h>
 
 #define RECV_CIRCLE_TIME 5
-#define TIME_OUT_LIMIT 20
+#define TIME_OUT_LIMIT 30
 
 
 namespace XSOCKET

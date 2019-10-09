@@ -21,6 +21,7 @@ int case1() {
 	assert(g.Query("abcd") == NFA_SUCCESS);
 	assert(g.Query("abcde") == NFA_ERR);
 	assert(g.Query("abbcb") == NFA_SUCCESS);
+	assert(g.Query("ab") == NFA_SUCCESS);
 
 	assert(g.Delete_Rule("a*b") == NFA_SUCCESS);
 
@@ -82,6 +83,18 @@ int case3() {
 	return 0;
 }
 
+int case4() {
+	Nfa g;
+	assert(g.Insert_Rule("abcd") == NFA_SUCCESS);
+	assert(g.Insert_Rule("a") == NFA_SUCCESS);
+	assert(g.Insert_Rule("a") == NFA_REPEAT);
+	assert(g.Query("abcd") == NFA_SUCCESS);
+	assert(g.Delete_Rule("a") == NFA_SUCCESS);
+	assert(g.Query("a") == NFA_ERR);
+	assert(g.Query("abcd") == NFA_SUCCESS);
+	return 0;
+}
 int main() {
 	case1();
+	case4();
 }

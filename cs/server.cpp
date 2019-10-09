@@ -1,4 +1,3 @@
-using namespace std;
 #ifdef _WIN32
 #pragma comment(lib, "pthreadVC2.lib")
 #endif

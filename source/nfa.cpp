@@ -1,5 +1,5 @@
 #include "nfa.h"
-#include "Protocal.h"
+#include "NProtocol.h"
 #include <iostream>
 using namespace std;
 using namespace NFA;
@@ -55,15 +55,24 @@ Node* Nfa::goto_next(int& now, int nt, bool addcount)
 int Nfa::Insert_Rule(const char buf[])
 {
 	printf("%s line:%d\n", __func__, __LINE__);
+	cout << "------->" << buf << endl;
 	size_t len = strlen(buf);
 	int now = 0;
 	Node *nd = &nodes[now];
 	MAP mp;
+	string st = buf;
 	
 	if (len == 0) {
-		printf("No rules to insert");
+		printf("No rules to insert\n");
 		return NFA_ERR;
 	}
+
+	if (rules.find(st) != rules.end()) {
+		printf("Have set rule %s\n", buf);
+		return NFA_REPEAT;
+	}
+
+	rules.insert(st);
 
 	nodes[now].count++;
 	for (int i = 0; i < len; i++) {
@@ -74,40 +83,40 @@ int Nfa::Insert_Rule(const char buf[])
 		}
 		nd = goto_next(now, mp[buf[i]], true);
 	}
-	(*nd).is_end = true;
+	nd->endc++;
 	return NFA_SUCCESS;
 }
 
 int Nfa::Delete_Rule(const char buf[])
 {
 	printf("%s line:%d\n", __func__, __LINE__);
+	cout << "------->" << buf << endl;
 	size_t len = strlen(buf);
 	std::vector<int> path;
 	int now = 0;
 	Node* nd = &nodes[now];
 	MAP mp;
+	string st = buf;
 
 	if (len == 0)
 		return NFA_ERR;
 
-	int maxflow = nodes[now].count;
-	path.push_back(now);
+	if (rules.find(st) == rules.end()) {
+		printf("Haven't set rule %s\n", buf);
+		return NFA_ERR;
+	}
+
+	rules.erase(st);
+
 	for (int i = 0; i < len; i++) {
 		mp = (*nd).mp;
 		if (mp.find(buf[i]) == mp.end())
 			return NFA_ERR;
+		nd->count--;
 		nd = goto_next(now, mp[buf[i]], false);
-		maxflow = min(maxflow, (*nd).count);
-		path.push_back(mp[buf[i]]);
 	}
+	nd->endc--;
 
-	for (int i = 0; i < path.size(); i++) {
-		int id = path[i];
-		nodes[id].count -= maxflow;
-		if (nodes[id].count == 0) {
-			nodes[id].is_end = nodes[id].is_cycle = false;
-		}
-	}
 	Show();
 	return NFA_SUCCESS;
 }
@@ -141,6 +150,9 @@ int Nfa::Query(const char buf[])
 			}
 			if(can_trans(fd, buf[i])) {
 				push_to_queue(Q, vis, mp[buf[i]]);
+				int curr = mp[buf[i]];
+				if (can_trans(curr, FREE))
+					push_to_queue(Q, vis, nodes[curr].mp[FREE]);
 			}
 		}
 		if (Q.size() == 0) {
@@ -152,9 +164,12 @@ int Nfa::Query(const char buf[])
 	while (!Q.empty()) {
 		int fd = Q.front();
 		Q.pop_front();
-		if (nodes[fd].is_end)
+		if (nodes[fd].endc) {
+			printf("Find!\n");
 			return NFA_SUCCESS;
+		}
 	}
+	printf("Not Found\n");
 	return NFA_ERR;
 }
 
@@ -165,7 +180,7 @@ int Nfa::Show()
 		Node nd = nodes[i];
 		cout << "node " << i << " " << nodes[i].count 
 			<< (nodes[i].is_cycle ? " Is_cycle " : " ")
-			<< (nodes[i].is_end ? " Is_end " : " ") << endl;
+			<< (nodes[i].endc ? " Is_end " : " ") << endl;
 		for (MAP::iterator it = nd.mp.begin(); it != nd.mp.end(); it++)
 			cout << " <" << it->first << ", " << it->second << ">" << endl;
 	}
@@ -200,7 +215,12 @@ int Nfa::Parse_Data(char* recv, char* send, int& len)
 
 	int ans = Opeartion(head_ptr->command, str);
 	char body[8];
-	body[0] = ans == 0 ? 'y' : 'n';
+	switch (ans) {
+	case NFA_SUCCESS: body[0] = 'y'; break;
+	case NFA_ERR: body[0] = 'n'; break;
+	case NFA_REPEAT: body[0] = 'd'; break;
+	default: body[0] = 'u';
+	}
 	body[1] = '\0';
 
 	N_MESSAGE* ret = Make_Message(PROTOCOL_TYPE, HEART_BEAT + 1, head_ptr->command, body);
