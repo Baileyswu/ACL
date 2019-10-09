@@ -35,9 +35,6 @@ int case2(){
 	Nfa n;
 	assert(n.Insert_Rule("www.*.com") == NFA_SUCCESS);
 	assert(n.Query("www.baidu.com") == NFA_SUCCESS);
-
-	cout << "\n============\nTest OK!\n============\n" << endl;
-
 	return 0;
 }
 
@@ -94,7 +91,9 @@ int case4() {
 	assert(g.Query("abcd") == NFA_SUCCESS);
 	return 0;
 }
+
 int main() {
 	case1();
 	case4();
+	cout << "\n============\nTest OK!\n============\n" << endl;
 }

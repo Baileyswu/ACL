@@ -28,6 +28,42 @@
 
 ### 非确定型自动机（NFA）
 
+由于通配符*的存在，状态转移是非确定型的。  
+
+#### 举例
+用`a*b`, `abcd`, `a*c`构造NFA
+
+![](doc/nfa.png)
+
+#### 数据结构
+```cpp
+struct Node
+{
+    int endc;
+    bool is_cycle;
+    int count;
+    MAP mp;
+};
+class Nfa
+{
+    std::vector<Node> nodes;
+    std::set<std::string> rules;
+};
+```
+
+#### 主要方法
+```cpp
+class Nfa
+{
+public:
+    int Insert_Rule(const char buf[]);
+    int Delete_Rule(const char buf[]);
+    int Query(const char buf[]);
+    int Parse_Data(char* recv, char* send, int& len);
+};
+
+```
+
 ### Socket接口协议
 
 有关接口协议的内容包含在 `source\NProtocol.h` 中。
@@ -48,21 +84,39 @@
     - body = "a*b" 或 "abbcd" 等  
     当 command 合法时，表示具体的规则或请求
 
+#### 心跳协议
+
+若无消息传递，则每隔5s发送一次心跳包维持连接。  
+服务端超过30s未收到客户端发来的心跳则断开连接。
+
+
 ### 服务端
+调用Nfa Class提供查询与增删规则功能。Listen_Thread监听是否有客户端接入，若有Socket接入则开启Handle_Thread处理。每个Handle_Thread互不干扰。
 
-#### 功能
-
-#### 多线程设计
+![](doc\server.png)
 
 ### 客户端
 
-#### 功能
+设置双线程
+- Work_Thread         从过滤列表里读取增加规则的请求，或键入请求
+- HeartBeat_Thread    无请求时保持连接，发送心跳包
 
-#### 多线程设计
+![](doc\client.png)
+
+### CS 交互
+
+![](doc\cs1.png)
 
 ### Cmake
 
+可支持跨平台编译。
+
 ### Test
 
-Client Die
-Server Die
+- NFA Test Case
+    - Normal Test, assert
+    - Repeat insert & delete
+- Server die 
+    - 客户端发送心跳显示连接已断开
+- Client die
+    - 服务端通过心跳协议无响应中断连接
