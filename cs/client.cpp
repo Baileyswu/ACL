@@ -11,13 +11,15 @@
 #include <time.h>
 #include <pthread.h>
 
-#define FILE_NAME "blocklist"
+#define FILE_NAME "blocklist.txt"
 #define READ_ERR -80
 using namespace std;
 using namespace XSOCKET;
 
 XSocket skt;
 int send_time;
+
+pthread_mutex_t write_time_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void Pack_Msg(char command, char* str, char* buf, int& slen) 
 {
@@ -87,11 +89,15 @@ void* Work_Thread(void* ptr)
 	char send_buf[BUFSIZ];
 	char recv_buf[BUFSIZ];
 	int len;
+	int retcode;
+
 	send_time = CurrentTime();
 	FILE* pFile;
 	pFile = fopen(FILE_NAME, "r");
 	if (pFile == NULL) {
 		perror("Error opening file");
+		printf("Add file %s in your folder\n", FILE_NAME);
+		Sleep(3000);
 		pthread_exit(0);
 		return nullptr;
 	}
@@ -99,10 +105,17 @@ void* Work_Thread(void* ptr)
 	while (Read_From_File(pFile, command, str) == SUCCESS 
 		|| Read_From_Keyboard(command, str) == SUCCESS) {
 		Pack_Msg(command, str, send_buf, len);
-		if (skt.Send(send_buf, len) == SUCCESS && skt.Receive(recv_buf, len) == SUCCESS) {
+		if ((retcode = skt.Send(send_buf, len)) == SUCCESS 
+			&& (retcode = skt.Receive(recv_buf, len)) == SUCCESS) {
 			Decode_Msg(recv_buf, len);
+			pthread_mutex_lock(&write_time_mutex);
 			send_time = CurrentTime();
+			pthread_mutex_unlock(&write_time_mutex);
 			continue;
+		}
+		if (retcode == WSAECONNRESET) {
+			printf("Can't connect to server\n");
+			break;
 		}
 	}
 	pthread_exit(0);
@@ -119,10 +132,15 @@ void* HeartBeat_Thread(void* ptr)
 	int len;
 
 	while (true) {
-		if (send_time + RECV_CIRCLE_TIME < CurrentTime()) {
+		if (send_time + RECV_CIRCLE_TIME - 1 < CurrentTime()) {
 			skt.Make_Heart_Beat(send_buf, len);
-			skt.Send(send_buf, len);
+			if(skt.Send(send_buf, len) == WSAECONNRESET) {
+				printf("Can't connect to server\n");
+				break;
+			}
+			pthread_mutex_lock(&write_time_mutex);
 			send_time = CurrentTime();
+			pthread_mutex_unlock(&write_time_mutex);
 		}
 	}
 	pthread_exit(0);
@@ -143,8 +161,8 @@ int main()
 
 	pthread_create(&work_id, NULL, Work_Thread, NULL);
 	pthread_create(&heartbeat_id, NULL, HeartBeat_Thread, NULL);
-	pthread_join(work_id, &main_id);
 	pthread_join(heartbeat_id, &main_id);
+	pthread_detach(work_id);
 
 	skt.Close_Client();
 

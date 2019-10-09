@@ -220,7 +220,7 @@ int XSocket::Send(int& clntSock, char* cstr, int& len)
 	iResult = send(clntSock, cstr, len, 0);
 	if (iResult == SOCKET_ERROR) {
 		err_code = Get_Error_Code(clntSock);
-		Print_Info("send failed with error", err_code);
+		// Print_Info("send failed with error", err_code);
 		return err_code;
 	}
 	return SUCCESS;
