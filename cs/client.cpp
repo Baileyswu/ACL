@@ -21,6 +21,17 @@ int send_time;
 
 pthread_mutex_t write_time_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+void Print_Command() {
+	printf("=================================\n"\
+		"Input format: <command> <string>  \n"\
+		"Command List:\n"\
+		"  a: insert rule\n"\
+		"  d: delete rule\n"\
+		"  q: query string\n"\
+		"Example: \n"\
+		"  a a*b\n");
+}
+
 void Pack_Msg(char command, char* str, char* buf, int& slen) 
 {
 	N_MESSAGE* msg = Make_Message(PROTOCOL_TYPE, HEART_BEAT + 1, command, str);
@@ -78,6 +89,20 @@ int Read_From_File(FILE* fp, char& command, char* str)
 
 int Read_From_Keyboard(char& command, char* str) {
 	cin >> command >> str;
+	if (command != 'a' && command != 'q' && command != 'd') {
+		Print_Command();
+		return Read_From_Keyboard(command, str);
+	}
+	int len = strlen(str);
+	if (len < 1) {
+		Print_Command();
+		return Read_From_Keyboard(command, str);
+	}
+	for (int i = 0; i < len; i++)
+		if (str[i] == '*' && i + 1 < len && str[i + 1] == '*') {
+			Print_Command();
+			return Read_From_Keyboard(command, str);
+		}
 	return SUCCESS;
 }
 

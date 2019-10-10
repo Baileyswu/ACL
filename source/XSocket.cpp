@@ -179,8 +179,9 @@ int XSocket::Receive(int& clntSock, char* buffer, int& slen)
 
 	memset(buffer, 0, BUFSIZ);
 	slen = recv(clntSock, buffer, BUFSIZ, 0);
-	if (slen > 0)
-		printf("Bytes received: %d\n", slen);
+	if (slen > 0) {
+	//	printf("Bytes received: %d\n", slen);
+	}
 	else if (slen == 0) {
 		printf("Connection closed\n");
 		return XSOCKET_CLOSED;

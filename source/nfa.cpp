@@ -229,4 +229,3 @@ int Nfa::Parse_Data(char* recv, char* send, int& len)
 	memcpy(send, ret, len);
 	return NFA_SUCCESS;
 }
-
